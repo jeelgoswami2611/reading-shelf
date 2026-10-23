@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#170b10">
+<title>The Reading Shelf</title>
+<meta name="description" content="A curated shelf of interesting reads.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: a dark wine-coloured library. Each group is a wooden shelf of book spines; tap a spine to open the book's card and its link. Committed single dark look, as in the reference. */
+:root {
+  color-scheme: dark;
+  --night: #170b10;
+  --wine: #2a1119;
+  --wall: #3a1620;
+  --ink: #f6e9e4;
+  --muted: #b8a0a2;
+  --rose: #e0405a;
+  --line: rgba(246,233,228,.16);
+  --chip: rgba(246,233,228,.07);
+  --wood: #4a1a24;
+  --wood-dark: #24090f;
+  --sp1: #b8243a; --sp2: #7a1530; --sp3: #d96b4f; --sp4: #4f0d1c;
+  --sp5: #a51f2f; --sp6: #e2795c; --sp7: #c84f1f; --sp8: #8e2a3c;
+  --f-display: "Cormorant Garamond", "Georgia", "Times New Roman", serif;
+  --f-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--night); color: var(--ink);
+  background-image: radial-gradient(120% 70% at 20% 0%, var(--wall) 0%, var(--wine) 45%, var(--night) 100%);
+  background-attachment: fixed;
+  font-family: var(--f-body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 110px;
+  min-height: 100%;
+}
+.wrap { max-width: 1100px; margin: 0 auto; display: grid; gap: 22px; }
+.date { font-size: 13px; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); margin: 0; }
+h1 { font-family: var(--f-display); font-weight: 600; font-size: clamp(2.4rem, 7vw, 3.4rem); line-height: 1; margin: 4px 0 0; text-wrap: balance; }
+h1 em { font-style: normal; color: var(--rose); }
+.count { color: var(--muted); margin-top: 6px; font-variant-numeric: tabular-nums; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--rose); outline-offset: 2px; }
+
+.search { width: 100%; padding: 11px 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--chip); }
+.search::placeholder { color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { border: 1px solid var(--line); background: var(--chip); border-radius: 999px; padding: 7px 16px; cursor: pointer; color: var(--ink); }
+.chip.small { padding: 5px 14px; font-size: 14px; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--night); border-color: var(--ink); }
+.cats { display: grid; gap: 8px; }
+.cat-label { font-size: 12px; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); }
+.cat-chips { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+.cat-chips .chip { flex: 0 0 auto; white-space: nowrap; }
+.chip[aria-pressed="true"].cat { background: var(--rose); border-color: var(--rose); color: #fff; }
+.chip[aria-pressed="true"].gen { background: #e2795c; border-color: #e2795c; color: var(--night); }
+.chip .n { opacity: .65; margin-left: 6px; font-variant-numeric: tabular-nums; }
+
+.shelf-block { display: grid; gap: 10px; }
+.shelf-head { display: flex; gap: 12px; align-items: baseline; }
+.shelf-head h2 { margin: 0; font-size: 14px; font-weight: 600; letter-spacing: .24em; text-transform: uppercase; }
+.shelf-head span { color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+.shelf { overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+.row { display: flex; align-items: flex-end; gap: 3px; padding: 0 6px; min-height: 260px; width: max-content; min-width: 100%; }
+.board { height: 14px; margin-top: -1px; border-radius: 2px; background: linear-gradient(var(--wood), var(--wood-dark)); box-shadow: 0 10px 18px -6px rgba(0,0,0,.7); }
+
+.spine {
+  position: relative; flex: 0 0 auto; border: 0; cursor: pointer; padding: 14px 6px;
+  border-radius: 3px 3px 1px 1px; color: #fbeee9;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  writing-mode: vertical-rl; transform: rotate(180deg);
+  box-shadow: inset 4px 0 0 rgba(255,255,255,.08), inset -5px 0 8px rgba(0,0,0,.28), 0 -2px 6px rgba(0,0,0,.25);
+  text-align: left; overflow: hidden;
+}
+.spine::before { content: ""; position: absolute; left: 0; right: 0; top: 16px; height: 2px; background: rgba(255,255,255,.18); }
+.spine::after { content: ""; position: absolute; left: 0; right: 0; bottom: 16px; height: 2px; background: rgba(255,255,255,.18); }
+.spine .t { font-family: var(--f-display); font-weight: 700; font-size: 17px; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-height: 100%; }
+.spine .a { font-family: var(--f-display); font-style: italic; font-size: 14px; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.spine.flash { outline: 3px solid var(--ink); }
+@media (prefers-reduced-motion: no-preference) {
+  .spine { transition: translate .18s ease; }
+  .spine:hover, .spine:focus-visible { translate: 0 -10px; }
+}
+
+.empty { border: 1px dashed var(--line); border-radius: 12px; padding: 36px 20px; text-align: center; color: var(--muted); }
+.empty strong { display: block; font-family: var(--f-display); font-size: 1.7rem; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+
+.fab { position: fixed; right: max(20px, calc(env(safe-area-inset-right, 0px) + 16px)); bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  width: 64px; height: 64px; border-radius: 50%; border: 0; background: #fbe3e1; color: var(--night); font-size: 34px; line-height: 1; cursor: pointer;
+  box-shadow: 0 10px 26px rgba(0,0,0,.5); z-index: 15; }
+
+.overlay { position: fixed; inset: 0; background: rgba(8,3,5,.65); display: grid; place-items: center; z-index: 20;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.sheet { background: var(--wine); border: 1px solid var(--line); border-radius: 16px; width: min(540px, 100%); max-height: 100%; overflow: auto; padding: 22px; display: grid; gap: 14px; }
+.sheet h3 { font-family: var(--f-display); font-weight: 600; font-size: 2rem; line-height: 1.1; margin: 0; text-wrap: balance; overflow-wrap: anywhere; }
+.d-author { font-family: var(--f-display); font-style: italic; font-size: 1.2rem; color: var(--muted); margin-top: -8px; }
+.d-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill { font-size: 12px; border-radius: 999px; padding: 3px 10px; border: 1px solid var(--line); color: var(--muted); }
+.pill.status { color: var(--ink); background: var(--chip); }
+.stars { color: #f0a25a; letter-spacing: 2px; }
+.d-note { margin: 0; overflow-wrap: anywhere; }
+.d-call { font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn { border: 1px solid var(--ink); background: var(--ink); color: var(--night); border-radius: 999px; padding: 9px 18px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn.danger { background: transparent; color: #ff8f9c; border-color: #ff8f9c; }
+.field { display: grid; gap: 4px; }
+.field label { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.field input, .field select, .field textarea { width: 100%; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--night); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 480px) { .row2 { grid-template-columns: 1fr; } }
+.sheet-foot { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; }
+.sheet-foot .right { display: flex; gap: 10px; margin-left: auto; }
+.err { color: #ff8f9c; font-size: 13px; margin: 0; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(100px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--night); padding: 8px 16px; border-radius: 999px; font-size: 14px; z-index: 30; }
+</style>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <p class="date" id="date"></p>
+    <h1>The Reading <em>Shelf</em></h1>
+    <div class="count" id="count">Opening the shelves…</div>
+  </header>
+
+  <input class="search" id="q" type="search" placeholder="Search titles, authors or tags">
+  <div class="cats" id="genreRow" hidden><span class="cat-label">Genre</span><div class="chips cat-chips" id="genreChips"></div></div>
+  <div class="cats" id="catRow" hidden><span class="cat-label">Categories</span><div class="chips cat-chips" id="catChips"></div></div>
+  <div class="chips" id="groupChips"></div>
+  <div class="chips" id="statusChips"></div>
+
+  <main id="shelves" style="display:grid;gap:30px"></main>
+  <div class="empty" id="empty" hidden></div>
+</div>
+
+
+<!-- Book card -->
+<div class="overlay" id="detail" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="d-title">
+    <div class="d-call" id="d-call"></div>
+    <h3 id="d-title"></h3>
+    <div class="d-author" id="d-author"></div>
+    <div class="d-meta" id="d-meta"></div>
+    <p class="d-note" id="d-note"></p>
+    <div class="actions">
+      <a class="btn" id="d-open" target="_blank" rel="noopener">Open link ↗</a>
+      <button class="btn ghost" type="button" id="d-copy">Copy #</button>
+      <button class="btn ghost" type="button" id="d-close">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const BOOKS = [
+ {
+  "addedAt": "2026-10-23T11:31:00.000Z",
+  "author": "Ethan Mollick",
+  "callNo": "IR-001",
+  "genre": "Business",
+  "kind": "Book",
+  "note": "A Wharton professor's practical guide to using AI as a partner at work and in teaching, with simple rules for getting good results.",
+  "rating": 0,
+  "status": "to-read",
+  "tags": [
+   "AI",
+   "work",
+   "education"
+  ],
+  "title": "Co-Intelligence: Living and Working with AI",
+  "url": "https://www.penguinrandomhouse.com/books/741805/co-intelligence-by-ethan-mollick/",
+  "id": "ir-001"
+ },
+ {
+  "addedAt": "2026-10-23T11:37:00.000Z",
+  "author": "Stuart Russell",
+  "callNo": "IR-002",
+  "genre": "Popular Science",
+  "kind": "Book",
+  "note": "A leading AI researcher argues machines should be built to stay uncertain about what humans want, so they remain under our control.",
+  "rating": 0,
+  "status": "to-read",
+  "tags": [
+   "AI",
+   "safety"
+  ],
+  "title": "Human Compatible",
+  "url": "https://en.wikipedia.org/wiki/Human_Compatible",
+  "id": "ir-002"
+ },
+ {
+  "addedAt": "2026-10-23T11:37:01.000Z",
+  "author": "Mustafa Suleyman",
+  "callNo": "IR-003",
+  "genre": "Current Affairs",
+  "kind": "Book",
+  "note": "A DeepMind co-founder on how AI and biotech will reshape power, and what it takes to contain them.",
+  "rating": 0,
+  "status": "to-read",
+  "tags": [
+   "AI",
+   "society"
+  ],
+  "title": "The Coming Wave",
+  "url": "https://en.wikipedia.org/wiki/The_Coming_Wave",
+  "id": "ir-003"
+ },
+ {
+  "addedAt": "2026-10-23T11:37:02.000Z",
+  "author": "Kai-Fu Lee",
+  "callNo": "IR-004",
+  "genre": "Business",
+  "kind": "Book",
+  "note": "The US–China race in AI and what it means for jobs and economies, from a veteran of both tech worlds.",
+  "rating": 0,
+  "status": "to-read",
+  "tags": [
+   "AI",
+   "business"
+  ],
+  "title": "AI Superpowers",
+  "url": "https://en.wikipedia.org/wiki/AI_Superpowers",
+  "id": "ir-004"
+ },
+ {
+  "addedAt": "2026-10-23T11:37:03.000Z",
+  "author": "Max Tegmark",
+  "callNo": "IR-005",
+  "genre": "Popular Science",
+  "kind": "Book",
+  "note": "An MIT physicist explores possible futures with advanced AI, from everyday impact to the long term.",
+  "rating": 0,
+  "status": "to-read",
+  "tags": [
+   "AI",
+   "society"
+  ],
+  "title": "Life 3.0",
+  "url": "https://en.wikipedia.org/wiki/Life_3.0",
+  "id": "ir-005"
+ },
+ {
+  "addedAt": "2026-10-23T11:37:04.000Z",
+  "author": "Nick Bostrom",
+  "callNo": "IR-006",
+  "genre": "Philosophy",
+  "kind": "Book",
+  "note": "The classic case for taking the risks of smarter-than-human AI seriously.",
+  "rating": 0,
+  "status": "to-read",
+  "tags": [
+   "AI",
+   "safety"
+  ],
+  "title": "Superintelligence",
+  "url": "https://en.wikipedia.org/wiki/Superintelligence:_Paths,_Dangers,_Strategies",
+  "id": "ir-006"
+ },
+ {
+  "addedAt": "2026-10-23T11:37:05.000Z",
+  "author": "Brian Christian",
+  "callNo": "IR-007",
+  "genre": "Popular Science",
+  "kind": "Book",
+  "note": "Readable stories of how machine learning systems learn the wrong lessons, and how researchers try to fix it.",
+  "rating": 0,
+  "status": "to-read",
+  "tags": [
+   "AI",
+   "safety"
+  ],
+  "title": "The Alignment Problem",
+  "url": "https://en.wikipedia.org/wiki/The_Alignment_Problem",
+  "id": "ir-007"
+ },
+ {
+  "addedAt": "2026-10-23T11:37:06.000Z",
+  "author": "Stuart Russell & Peter Norvig",
+  "callNo": "IR-008",
+  "genre": "Textbook",
+  "kind": "Book",
+  "note": "The standard university AI textbook, covering search, reasoning, learning and robotics.",
+  "rating": 0,
+  "status": "to-read",
+  "tags": [
+   "AI",
+   "textbook"
+  ],
+  "title": "Artificial Intelligence: A Modern Approach",
+  "url": "https://en.wikipedia.org/wiki/Artificial_Intelligence:_A_Modern_Approach",
+  "id": "ir-008"
+ },
+ {
+  "addedAt": "2026-10-23T11:37:07.000Z",
+  "author": "Goodfellow, Bengio & Courville",
+  "callNo": "IR-009",
+  "genre": "Textbook",
+  "kind": "Book",
+  "note": "The core deep learning textbook. The full text is free to read online.",
+  "rating": 0,
+  "status": "to-read",
+  "tags": [
+   "AI",
+   "deep learning",
+   "textbook"
+  ],
+  "title": "Deep Learning",
+  "url": "https://www.deeplearningbook.org/",
+  "id": "ir-009"
+ },
+ {
+  "addedAt": "2026-10-23T11:37:08.000Z",
+  "author": "Zhang, Lipton, Li & Smola",
+  "callNo": "IR-010",
+  "genre": "Textbook",
+  "kind": "Book",
+  "note": "A free interactive book with runnable code for every concept.",
+  "rating": 0,
+  "status": "to-read",
+  "tags": [
+   "AI",
+   "deep learning",
+   "hands-on"
+  ],
+  "title": "Dive into Deep Learning",
+  "url": "https://d2l.ai/",
+  "id": "ir-010"
+ },
+ {
+  "addedAt": "2026-10-23T11:37:09.000Z",
+  "author": "Pedro Domingos",
+  "callNo": "IR-011",
+  "genre": "Popular Science",
+  "kind": "Book",
+  "note": "A tour of the five main schools of machine learning, written for non-specialists.",
+  "rating": 0,
+  "status": "to-read",
+  "tags": [
+   "AI",
+   "machine learning"
+  ],
+  "title": "The Master Algorithm",
+  "url": "https://en.wikipedia.org/wiki/The_Master_Algorithm",
+  "id": "ir-011"
+ },
+ {
+  "addedAt": "2026-10-23T11:37:10.000Z",
+  "author": "Cathy O'Neil",
+  "callNo": "IR-012",
+  "genre": "Social Science",
+  "kind": "Book",
+  "note": "How algorithms used in hiring, lending and education can quietly reinforce unfairness.",
+  "rating": 0,
+  "status": "to-read",
+  "tags": [
+   "AI",
+   "society",
+   "ethics"
+  ],
+  "title": "Weapons of Math Destruction",
+  "url": "https://en.wikipedia.org/wiki/Weapons_of_Math_Destruction",
+  "id": "ir-012"
+ }
+];
+(function () {
+  const STATUS = { "reading": "Reading", "to-read": "To read", "finished": "Finished" };
+  const GROUPS = { status: "By Shelf", genre: "By Genre", rating: "★ By Rating", tag: "By Tag", kind: "By Type" };
+  const DEFAULT_GENRES = ["Popular Science", "Business", "Textbook", "Philosophy", "Social Science", "Current Affairs", "Self-help", "Biography", "Fiction", "History"];
+  const $ = (id) => document.getElementById(id);
+  let db = null, reads = [], canWrite = true, editingId = null, viewing = null, confirmDel = false, flashed = false;
+  const view = { q: "", status: null, group: "status", tag: null, genre: null };
+
+  $("date").textContent = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+
+  function el(tag, attrs, ...kids) {
+    const n = document.createElement(tag);
+    for (const k in (attrs || {})) {
+      if (k === "class") n.className = attrs[k];
+      else if (k === "style") n.setAttribute("style", attrs[k]);
+      else if (k.startsWith("on")) n.addEventListener(k.slice(2), attrs[k]);
+      else n.setAttribute(k, attrs[k]);
+    }
+    for (const c of kids) if (c != null) n.append(c);
+    return n;
+  }
+  function toast(m) { const t = $("toast"); t.textContent = m; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2400); }
+  function hash(s) { let h = 2166136261; for (const c of String(s)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+
+  function chips(id, items, current, onPick, small) {
+    $(id).replaceChildren(...items.map(([val, label]) =>
+      el("button", { class: "chip" + (small ? " small" : ""), type: "button", "aria-pressed": String(current === val), onclick: () => onPick(val) }, label)));
+  }
+
+  function matches(r) {
+    if (view.status && r.status !== view.status) return false;
+    if (view.tag && !(r.tags || []).includes(view.tag)) return false;
+    if (view.genre && (r.genre || "Uncategorised") !== view.genre) return false;
+    if (view.q) {
+      const hay = [r.title, r.author, r.note, r.callNo, r.genre, (r.tags || []).join(" ")].join(" ").toLowerCase();
+      if (!hay.includes(view.q.toLowerCase())) return false;
+    }
+    return true;
+  }
+
+  function groupsOf(list) {
+    const g = new Map();
+    const put = (k, r) => { if (!g.has(k)) g.set(k, []); g.get(k).push(r); };
+    if (view.group === "status") ["reading", "to-read", "finished"].forEach(s => { const items = list.filter(r => r.status === s); if (items.length) g.set(STATUS[s], items); });
+    else if (view.group === "rating") [5,4,3,2,1,0].forEach(n => { const items = list.filter(r => (r.rating || 0) === n); if (items.length) g.set(n ? "★".repeat(n) : "Not rated", items); });
+    else if (view.group === "genre") list.forEach(r => put(r.genre || "Uncategorised", r));
+    else if (view.group === "tag") list.forEach(r => (r.tags && r.tags.length ? r.tags : ["Untagged"]).forEach(t => put(t, r)));
+    else list.forEach(r => put(r.kind || "Book", r));
+    return g;
+  }
+
+  function spine(r) {
+    const h = hash(r.title + r.callNo);
+    const height = 190 + (h % 60);
+    const width = 48 + ((h >> 8) % 18);
+    const color = "var(--sp" + (1 + (h >> 4) % 8) + ")";
+    return el("button", { class: "spine", type: "button", id: r.id, "aria-label": r.title + (r.author ? " by " + r.author : ""),
+      style: `height:${height}px;width:${width}px;background:linear-gradient(90deg, rgba(0,0,0,.15), transparent 30%), ${color}`,
+      onclick: () => openDetail(r) },
+      el("span", { class: "t" }, r.title), r.author ? el("span", { class: "a" }, r.author) : null);
+  }
+
+  function render() {
+    const total = reads.length;
+    $("count").textContent = db ? `${total} ${total === 1 ? "book" : "books"} on the shelves` : $("count").textContent;
+    const genreCount = new Map();
+    reads.forEach(r => { const g = r.genre || "Uncategorised"; genreCount.set(g, (genreCount.get(g) || 0) + 1); });
+    if (view.genre && !genreCount.has(view.genre)) view.genre = null;
+    const gens = [...genreCount.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    $("genreRow").hidden = !reads.length;
+    $("genreChips").replaceChildren(
+      el("button", { class: "chip gen", type: "button", "aria-pressed": String(view.genre === null), onclick: () => { view.genre = null; render(); } }, "All genres"),
+      ...gens.map(([g, n]) => el("button", { class: "chip gen", type: "button", "aria-pressed": String(view.genre === g),
+        onclick: () => { view.genre = view.genre === g ? null : g; render(); } }, g, el("span", { class: "n" }, String(n)))));
+    const dl = $("genreList");
+    if (dl) dl.replaceChildren(...[...new Set([...genreCount.keys()].filter(g => g !== "Uncategorised").concat(DEFAULT_GENRES))].map(g => el("option", { value: g })));
+    const tagCount = new Map();
+    reads.forEach(r => (r.tags || []).forEach(t => tagCount.set(t, (tagCount.get(t) || 0) + 1)));
+    if (view.tag && !tagCount.has(view.tag)) view.tag = null;
+    const cats = [...tagCount.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    $("catRow").hidden = !cats.length;
+    $("catChips").replaceChildren(
+      el("button", { class: "chip cat", type: "button", "aria-pressed": String(view.tag === null), onclick: () => { view.tag = null; render(); } }, "All topics"),
+      ...cats.map(([t, n]) => el("button", { class: "chip cat", type: "button", "aria-pressed": String(view.tag === t),
+        onclick: () => { view.tag = view.tag === t ? null : t; render(); } }, t, el("span", { class: "n" }, String(n)))));
+    chips("groupChips", Object.entries(GROUPS), view.group, (v) => { view.group = v; render(); });
+    chips("statusChips", [[null, "All"], ...Object.entries(STATUS)], view.status, (v) => { view.status = v; render(); }, true);
+
+    const shown = reads.filter(matches);
+    const main = $("shelves"); main.replaceChildren();
+    for (const [name, items] of groupsOf(shown)) {
+      main.append(el("section", { class: "shelf-block" },
+        el("div", { class: "shelf-head" }, el("h2", null, name), el("span", null, items.length + (items.length === 1 ? " book" : " books"))),
+        el("div", { class: "shelf" }, el("div", { class: "row" }, ...items.map(spine))),
+        el("div", { class: "board" })));
+    }
+    const empty = $("empty");
+    if (!total) { empty.hidden = false; empty.replaceChildren(el("strong", null, db ? "The shelves are empty" : "Opening the shelves"), db ? "New books are on their way." : "Books appear here once the page connects."); }
+    else if (!shown.length) { empty.hidden = false; empty.replaceChildren(el("strong", null, "No books match"), "Clear the search, or pick All genres, All topics and All."); }
+    else empty.hidden = true;
+
+    if (!flashed && location.hash && total) {
+      const id = location.hash.slice(1), r = reads.find(x => x.id === id);
+      if (r) { flashed = true; const s = document.getElementById(id); if (s) { s.scrollIntoView({ block: "center", inline: "center" }); s.classList.add("flash"); } openDetail(r); }
+    }
+  }
+
+  function openDetail(r) {
+    viewing = r;
+    $("d-call").textContent = r.callNo + " · " + (r.kind || "Book");
+    $("d-title").textContent = r.title;
+    $("d-author").textContent = r.author || "";
+    const meta = $("d-meta"); meta.replaceChildren(el("span", { class: "pill status" }, STATUS[r.status] || r.status));
+    if (r.genre) meta.append(el("span", { class: "pill status" }, r.genre));
+    if (r.rating) meta.append(el("span", { class: "pill stars" }, "★".repeat(r.rating)));
+    (r.tags || []).forEach(t => meta.append(el("span", { class: "pill" }, "#" + t)));
+    $("d-note").textContent = r.note || ""; $("d-note").hidden = !r.note;
+    const open = $("d-open");
+    if (r.url) { open.href = r.url; open.hidden = false; } else { open.removeAttribute("href"); open.hidden = true; }
+    $("d-copy").textContent = "Copy #" + r.id;
+    $("detail").hidden = false;
+  }
+  function closeDetail() { $("detail").hidden = true; viewing = null; }
+  $("d-close").addEventListener("click", closeDetail);
+  $("detail").addEventListener("click", (e) => { if (e.target === $("detail")) closeDetail(); });
+    $("d-copy").addEventListener("click", () => {
+    const text = "#" + viewing.id;
+    try { navigator.clipboard.writeText(text).then(() => toast("Copied " + text + " — add it to the end of this page's link"), () => toast("Shelf link + " + text)); }
+    catch (e) { toast("Shelf link + " + text); }
+  });
+
+  function nextCallNo() {
+    const max = reads.reduce((m, r) => Math.max(m, parseInt(String(r.callNo).replace(/\D/g, ""), 10) || 0), 0);
+    return "IR-" + String(max + 1).padStart(3, "0");
+  }
+  function openForm(r) {
+    editingId = r ? r.id : null; confirmDel = false;
+    $("formTitle").textContent = r ? "Edit " + r.callNo : "Add a book";
+    $("f-title").value = r?.title || ""; $("f-author").value = r?.author || ""; $("f-url").value = r?.url || "";
+    $("f-kind").value = r?.kind || "Book"; $("f-status").value = r?.status || "to-read";
+    $("f-genre").value = r?.genre || "";
+    $("f-tags").value = (r?.tags || []).join(", "); $("f-rating").value = String(r?.rating || 0); $("f-note").value = r?.note || "";
+    $("delBtn").hidden = !r; $("delBtn").textContent = "Delete";
+    $("formErr").hidden = true; $("overlay").hidden = false; $("f-title").focus();
+  }
+  function closeForm() { $("overlay").hidden = true; editingId = null; }
+  function showErr(m) { $("formErr").textContent = m; $("formErr").hidden = false; }
+  function writeError(e) {
+    if (e && e.code === "invalid_argument") { canWrite = false; $("addBtn").hidden = true; return "Only the shelf's owner can change it."; }
+    if (e && e.code === "quota_exceeded") return "The shelf is full. Delete a few books to make room.";
+    return "Couldn't save just now. Check your connection and try again.";
+  }
+
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { if (!$("detail").hidden) closeDetail(); } });
+  $("q").addEventListener("input", (e) => { view.q = e.target.value.trim(); render(); });
+
+  render();
+
+  canWrite = false; db = {};
+  reads = BOOKS;
+  render();
+
+})();
+</script>
+
+</body>
+</html>
