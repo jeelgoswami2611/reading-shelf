@@ -167,7 +167,26 @@ button, input, select, textarea { font: inherit; color: inherit; }
 <div class="toast" id="toast" hidden></div>
 
 <script>
-const BOOKS = [];
+const BOOKS = [
+ {
+  "addedAt": "2026-11-18T17:38:00.000Z",
+  "author": "Tim Denning",
+  "callNo": "IR-001",
+  "genre": "Self-help",
+  "kind": "Article",
+  "note": "Tim Denning draws on his own setbacks to urge people in their 20s and 30s to take bold risks and build something of their own instead of chasing the corporate ladder.",
+  "rating": 0,
+  "status": "to-read",
+  "tags": [
+   "career",
+   "life lessons",
+   "risk-taking"
+  ],
+  "title": "I'm 38. If You're in Your 20's or 30's, Read This.",
+  "url": "https://timdenning.substack.com/p/im-38-if-youre-in-your-20s-or-30s",
+  "id": "ir-001"
+ }
+];
 (function () {
   const STATUS = { "reading": "Reading", "to-read": "To read", "finished": "Finished" };
   const GROUPS = { status: "By Shelf", genre: "By Genre", rating: "★ By Rating", tag: "By Tag", kind: "By Type" };
